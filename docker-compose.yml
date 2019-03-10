@@ -1,15 +1,34 @@
-version: '3'
+version: '3.6'
 
 services:
-  etcd:
-    image: soyking/etcd-goreman:3.2.7
-    environment:
-      - CLIENT_ADDR=etcd
-  e3w:
-    image: soyking/e3w:latest
+  # etcd:
+  #   image: soyking/etcd-goreman:3.2.7
+  #   environment:
+  #     - CLIENT_ADDR=etcd
+  etcd-ui:
+    build:
+      context: ./ 
+      dockerfile: Dockerfile
+    image: asperitus/etcd-ui:latest
     volumes:
       - ./conf/config.default.ini:/app/conf/config.default.ini
     ports:
       - "8080:8080"
-    depends_on:
-      - etcd
+    # depends_on:
+    #   - etcd
+    networks:
+      - web
+    labels:
+      - "traefik.enable=true"
+      - "traefik.backend.loadbalancer.stickiness=true"
+      - "traefik.backend=etcd-ui"
+      - "traefik.docker.network=web"
+      - "traefik.entrypoints=http"
+      - "traefik.frontend.passHostHeader=true"
+      - "traefik.frontend.rule=Host:etcd-ui.local.m3"
+      - "traefik.port=8080"
+  
+networks:
+  web:
+    external: false
+    name: web
